@@ -50,6 +50,7 @@ Download Resume (Google Drive)
   ↓
 Send Application (Gmail)
 
+```markdown
 ### 2. Email Not Found — FALSE Branch
 
 ```text
@@ -75,6 +76,7 @@ Build Summary
   ↓
 Send Failures Summary
 
+```markdown
 ## 🤖 How Gemini AI Is Used
 
 Gemini AI is used to generate a personalized and professional cover email for each application.
@@ -217,6 +219,7 @@ n8n-resume-mailer-using-gemini/
     ├── N8N Resume Mailer - Gemini - Email Not Found - GitHub.json
     └── N8N Resume Mailer - Gemini - Email Found - GitHub.json
 
+```markdown
 ## 🎯 Learning Outcomes
 
 Through this project, I gained practical experience with:
