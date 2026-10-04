@@ -1,0 +1,449 @@
+{
+  "name": "N8N Resume Mailer - Gemini - Email Not Found",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9c0bd4dd-c83c-4beb-a1f0-64eeebe15b4f",
+      "name": "When clicking Test workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "resumeUrl",
+              "name": "resumeUrl",
+              "value": "YOUR_RESUME_GOOGLE_DRIVE_URL",
+              "type": "string"
+            },
+            {
+              "id": "summaryEmail",
+              "name": "summaryEmail",
+              "value": "your-email@example.com",
+              "type": "string"
+            },
+            {
+              "id": "yourName",
+              "name": "yourName",
+              "value": "Your Name",
+              "type": "string"
+            },
+            {
+              "id": "background",
+              "name": "background",
+              "value": "Computer Science and Engineering student with experience and learning in AI, machine learning, automation, RPA, and agentic AI.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ad2e170d-8121-41f4-8e35-21db635385a1",
+      "name": "Run Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [-896, 96],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "YOUR_EXCEL_FILE_ID",
+          "mode": "url"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "id": "29f3d09a-0b4d-4c31-96f4-c4cb839693e2",
+      "name": "Download Excel",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [-672, 96],
+      "credentials": {
+        "YOUR CREDENTIALS_NAME": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "YOUR CREDENTIALS NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "headerRow": true
+        }
+      },
+      "id": "5b6a7fa7-7b79-458c-a274-2c02f6014747",
+      "name": "Parse Excel",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [-448, 96]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website.startsWith('http') ? $json.website : 'https://' + $json.website }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "html"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "6029fa55-735b-4ceb-b9f7-51382b554c5a",
+      "name": "Fetch Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [-224, 96],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const html = $json.html || '';\nconst failed = !!$json.error || !html;\nconst row = $('Parse Excel').item.json;\nconst company = row['company name'] || row['Company Name'] || row.company || '';\nconst role = row['role'] || row['Role'] || '';\nconst website = row['website'] || row['Website'] || '';\nlet email = '';\nif (!failed) {\n  const matches = html.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g) || [];\n  const junk = /(\\.(png|jpe?g|gif|svg|webp|css|js))$|sentry|wixpress|example\\.|godaddy|yourdomain|domain\\.com/i;\n  const clean = matches.filter(function (e) { return !junk.test(e); });\n  email = clean.length ? clean[0] : '';\n}\nconst emailFound = !!email;\nlet reason = '';\nif (!emailFound) { reason = failed ? 'Could not fetch website' : 'No email found on site'; }\nreturn { company, role, website, email, emailFound, reason };"
+      },
+      "id": "f7157985-6d14-48ac-b252-2be31a39fcaa",
+      "name": "Extract Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 192]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "found",
+              "leftValue": "={{ $json.emailFound }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c8ee2f6a-32ba-45c0-aa3a-852aa5517078",
+      "name": "Email Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [224, 96]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-2.5-flash",
+          "cachedResultName": "gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a concise, professional job application cover email in HTML (use only <p> paragraphs, no <html>/<body> wrapper, no subject line, no markdown).\nApplicant name: {{ $(\"Run Config\").first().json.yourName }}\nApplying for: {{ $json.role }} at {{ $json.company }}\nApplicant background to highlight: {{ $(\"Run Config\").first().json.background }}\n\nRequirements: address the hiring team politely, tailor 2-3 short paragraphs to the role and company, mention the attached resume, and end with a professional sign-off using the applicant name. Do not invent facts not supported by the background."
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 1024,
+          "temperature": 0.7
+        }
+      },
+      "id": "20a8e1b6-a2c4-43b0-a857-a456aae558b5",
+      "name": "Generate Cover Email",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [448, 0],
+      "credentials": {
+        "YOUR CREDENTIALS_NAME": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "YOUR CREDENTIALS NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $(\"Run Config\").first().json.resumeUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "22f65da6-9f8f-4609-ad1c-966869294ccf",
+      "name": "Download Resume",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [720, 0]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Extract Email\").item.json.email }}",
+        "subject": "=Application for {{ $(\"Extract Email\").item.json.role }} - {{ $(\"Run Config\").first().json.yourName }}",
+        "message": "={{ $(\"Generate Cover Email\").item.json.candidates[0].content.parts[0].text }}",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [{}]
+          }
+        }
+      },
+      "id": "04b29cd2-7a5f-4705-9fe0-74ca6da5b1cc",
+      "name": "Send Application",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [896, 0],
+      "webhookId": "94d30c65-9f1e-4bbe-90d3-5a5ec8788b3a",
+      "credentials": {
+        "YOUR CREDENTIALS_NAME": {
+          "id": "YOUR_CREDENTIALS_ID",
+          "name": "YOUR CREDENTIALS NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "failures",
+        "options": {}
+      },
+      "id": "cbd37cc2-b4e9-4407-8897-f5d42daf6e98",
+      "name": "Aggregate Failures",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [448, 192]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst failures = [];\nfor (const i of items) { (i.json.failures || []).forEach(function (f) { failures.push(f); }); }\nconst parts = failures.map(function (f) {\n  return '<li><b>' + (f.company || '') + '</b> (' + (f.role || '') + ') - ' + (f.website || '') + ': ' + (f.reason || '') + '</li>';\n});\nconst html = '<p>The following ' + failures.length + ' companies could not be emailed:</p><ul>' + parts.join('') + '</ul>';\nreturn [{ json: { count: failures.length, summaryHtml: html } }];"
+      },
+      "id": "889322d6-407d-4194-a56d-d52fac967b73",
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [672, 192]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Run Config\").first().json.summaryEmail }}",
+        "subject": "=Resume mailer: {{ $json.count }} companies had no email found",
+        "message": "={{ $json.summaryHtml }}",
+        "options": {}
+      },
+      "id": "a2eb2a07-c19c-4934-aca6-f4cf19fccc7c",
+      "name": "Send Failures Summary",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [896, 192],
+      "webhookId": "7023c48f-78ee-4a27-9f9a-df329c3cfecc",
+      "executeOnce": true,
+      "credentials": {}
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking Test workflow": {
+      "main": [
+        [
+          {
+            "node": "Run Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Config": {
+      "main": [
+        [
+          {
+            "node": "Download Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Excel": {
+      "main": [
+        [
+          {
+            "node": "Parse Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Excel": {
+      "main": [
+        [
+          {
+            "node": "Fetch Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email": {
+      "main": [
+        [
+          {
+            "node": "Email Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Found?": {
+      "main": [
+        [
+          {
+            "node": "Generate Cover Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Cover Email": {
+      "main": [
+        [
+          {
+            "node": "Download Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Resume": {
+      "main": [
+        [
+          {
+            "node": "Send Application",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Failures": {
+      "main": [
+        [
+          {
+            "node": "Build Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Failures Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "085ee1be-5159-478a-bbc7-39bc3700a121",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR INSTANCE_ID"
+  },
+  "nodeGroups": [
+    {
+      "id": "dbe982f0-3837-48c4-93be-084949075f4d",
+      "name": "Load applications",
+      "nodeIds": [
+        "ad2e170d-8121-41f4-8e35-21db635385a1",
+        "29f3d09a-0b4d-4c31-96f4-c4cb839693e2",
+        "5b6a7fa7-7b79-458c-a274-2c02f6014747"
+      ],
+      "description": "Downloads the applications Excel from Google Drive and reads each row: company name, role, and website."
+    },
+    {
+      "id": "7ba4045f-9f8c-4a25-b059-3a384662bb06",
+      "name": "Find company emails",
+      "nodeIds": [
+        "6029fa55-735b-4ceb-b9f7-51382b554c5a",
+        "f7157985-6d14-48ac-b252-2be31a39fcaa"
+      ],
+      "description": "Fetches each company website and scrapes a contact email address from the page (best-effort)."
+    },
+    {
+      "id": "7f0e0ac6-9edc-4143-ba50-bcfc5a5199b3",
+      "name": "Send applications",
+      "nodeIds": [
+        "20a8e1b6-a2c4-43b0-a857-a456aae558b5",
+        "22f65da6-9f8f-4609-ad1c-966869294ccf",
+        "04b29cd2-7a5f-4705-9fe0-74ca6da5b1cc"
+      ],
+      "description": "For rows with an email, Gemini writes a tailored cover email and Gmail sends it with your resume PDF attached."
+    },
+    {
+      "id": "7c71a0b4-088f-4c15-baad-8cf99ba2bbd1",
+      "name": "Report failures",
+      "nodeIds": [
+        "cbd37cc2-b4e9-4407-8897-f5d42daf6e98",
+        "889322d6-407d-4194-a56d-d52fac967b73",
+        "a2eb2a07-c19c-4934-aca6-f4cf19fccc7c"
+      ],
+      "description": "Collects every company with no email found and emails you one summary of who was skipped and why."
+    }
+  ],
+  "id": "HreHdwdAul3sp5Oo",
+  "tags": []
+}
