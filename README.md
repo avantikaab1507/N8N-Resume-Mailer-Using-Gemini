@@ -20,63 +20,60 @@ The workflow automates several steps involved in applying to multiple companies:
 This project was initially provided as a classroom workflow reference and was then **configured, adapted, tested, and debugged in my own n8n environment**.
 
 ---
-
 ## ⚙️ Workflow Architecture
 
 The automation follows two main paths depending on whether an email address is successfully found.
 
 ### 1. Email Found — TRUE Branch
 
-```text
-Start
-  ↓
-Run Config
-  ↓
-Download Excel
-  ↓
-Parse Excel
-  ↓
-Fetch Website
-  ↓
-Extract Email
-  ↓
-Email Found?
-  ↓
-TRUE
-  ↓
-Generate Cover Email (Gemini)
-  ↓
-Download Resume (Google Drive)
-  ↓
-Send Application (Gmail)
+**Start**  
+↓  
+**Run Config**  
+↓  
+**Download Excel**  
+↓  
+**Parse Excel**  
+↓  
+**Fetch Website**  
+↓  
+**Extract Email**  
+↓  
+**Email Found?**  
+↓  
+**TRUE**  
+↓  
+**Generate Cover Email (Gemini)**  
+↓  
+**Download Resume (Google Drive)**  
+↓  
+**Send Application (Gmail)**
 
-```markdown
 ### 2. Email Not Found — FALSE Branch
 
-```text
-Start
-  ↓
-Run Config
-  ↓
-Download Excel
-  ↓
-Parse Excel
-  ↓
-Fetch Website
-  ↓
-Extract Email
-  ↓
-Email Found?
-  ↓
-FALSE
-  ↓
-Aggregate Failures
-  ↓
-Build Summary
-  ↓
-Send Failures Summary
+**Start**  
+↓  
+**Run Config**  
+↓  
+**Download Excel**  
+↓  
+**Parse Excel**  
+↓  
+**Fetch Website**  
+↓  
+**Extract Email**  
+↓  
+**Email Found?**  
+↓  
+**FALSE**  
+↓  
+**Aggregate Failures**  
+↓  
+**Build Summary**  
+↓  
+**Send Failures Summary**
 
-```markdown
+---
+
 ## 🤖 How Gemini AI Is Used
 
 Gemini AI is used to generate a personalized and professional cover email for each application.
@@ -206,20 +203,23 @@ To run the workflows in your own environment, you will need to configure your ow
 **Never upload API keys, passwords, OAuth tokens, or other private credentials to a public repository.**
 
 ---
-
 ## 📁 Repository Structure
 
-```text
-n8n-resume-mailer-using-gemini/
-│
-├── README.md
-│
-└── workflows/
-    ├── .gitkeep
-    ├── N8N Resume Mailer - Gemini - Email Not Found - GitHub.json
-    └── N8N Resume Mailer - Gemini - Email Found - GitHub.json
+The repository is organized as follows:
 
-```markdown
+**n8n-resume-mailer-using-gemini/**
+
+&nbsp;&nbsp;├── **README.md**
+
+&nbsp;&nbsp;└── **workflows/**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── **.gitkeep**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── **N8N Resume Mailer - Gemini - Email Not Found - GitHub.json**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── **N8N Resume Mailer - Gemini - Email Found - GitHub.json**
+
+---
 ## 🎯 Learning Outcomes
 
 Through this project, I gained practical experience with:
